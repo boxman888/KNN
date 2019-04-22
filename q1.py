@@ -16,13 +16,13 @@ class LoadData:
     def GetTrain(self):
         data = LoadData.Normalize(self.train)
         x = data[:,1:]
-        y = x[:,0]
+        y = self.train[:,0]
         return x, y
 
     def GetTest(self):
         data = LoadData.Normalize(self.test)
         x = data[:,1:]
-        y = x[:,0]
+        y = self.test[:,0]
         return x, y
 
 class KNN:
@@ -40,14 +40,14 @@ class KNN:
         return np.sum(np.absolute(v1 - v2))
 
     # Get Neighbors(Xtrain) near y, up to as K.
-    def GetNeighbores(Xtrain, y, K):
+    def GetNeighbores(Xtrain, x, K):
         dist = []
         friends = []
 
         for i in range(Xtrain.shape[0]):
-            ABS = KNN.ABS_dist(Xtrain[i],y)
-            #ed = KNN.Euclid_dist(Xtrain[i], y)
-            dist.append((i, round(ABS, 3)))
+            ABS = KNN.ABS_dist(Xtrain[i],x)
+            #ed = KNN.Euclid_dist(Xtrain[i], x)
+            dist.append((i, ABS))
 
         dist.sort(key=lambda item: item[1])
         for k in range(K):
@@ -60,7 +60,8 @@ class KNN:
         for i in neighbors:
             labelVote.append(Ytrain[i])
 
-        quorum = max(labelVote, key=labelVote.count)
+        quorum = mode(labelVote)
+        #quorum = max(labelVote, key=labelVote.count)
         return quorum
 
     def CalculateKNN(self, K):
@@ -68,15 +69,15 @@ class KNN:
         te_senate = []
 
         for i in range(self.Xtrain.shape[0]):
-            neighbores = KNN.GetNeighbores(self.Xtrain, self.Ytrain[i], K)
+            neighbores = KNN.GetNeighbores(self.Xtrain, self.Xtrain[i], K)
             vote = KNN.LabelClass(neighbores, self.Ytrain)
             tr_senate.append(vote)
 
         for i in range(self.Xtest.shape[0]):
-            neighbores = KNN.GetNeighbores(self.Xtest, self.Ytest[i], K)
+            neighbores = KNN.GetNeighbores(self.Xtest, self.Xtest[i], K)
             vote = KNN.LabelClass(neighbores, self.Ytest)
             te_senate.append(vote)
-        #print(senate)
+
         return tr_senate, te_senate
 
     def CalculateError(self, Values, Y):
@@ -91,13 +92,13 @@ def main():
     Xtest, Ytest = FILES.GetTest()
 
     knn = KNN(Xtrain, Ytrain, Xtest, Ytest)
-    tr_rep, te_rep = knn.CalculateKNN(3)
+    tr_rep, te_rep = knn.CalculateKNN(int(sys.argv[3]))
 
     tr_e = knn.CalculateError(tr_rep, Ytrain)
     te_e = knn.CalculateError(te_rep, Ytest)
 
-    print("Training Error: ", tr_e)
-    print("Testing Error: ", te_e)
+    print("Training Error: {0:.2f}".format(tr_e))
+    print("Testing Error: {0:.2f}".format(te_e))
 
 main()
 
