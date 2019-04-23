@@ -2,6 +2,8 @@ import sys
 from statistics import mode
 import math
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 np.set_printoptions(suppress=True)
 
@@ -93,7 +95,7 @@ class KNN:
     def CalculateError(self, Values, Y):
         delta = Values - Y
         err = len([val for val in delta if not math.isclose(val, 0.0)])
-        return err / len(Y)
+        return (err / len(Y)) * 100
 
 def main():
     FILES = LoadData(sys.argv[1], sys.argv[2])
@@ -112,6 +114,26 @@ def main():
     print("Validation Error: {0:.4f}".format(valtr_e))
     print("Testing Error: {0:.4f}".format(te_e))
 
+    graph = input("Would you like to graph these three errors? [y/n]: ")
+    graph.lower()
+    if (graph == 'y' or graph == 'yes'):
+        for i in range(1, 51, 3):
+            tr_rep, valtr_rep, te_rep = knn.CalculateKNN(int(sys.argv[3]))
+
+            tr_e = knn.CalculateError(tr_rep, Ytrain)
+            valtr_e = knn.CalculateError(valtr_rep, Ytrain)
+            te_e = knn.CalculateError(te_rep, Ytest)
+
+            plt.plot(i, tr_e, 'bo')
+            plt.plot(i, valtr_e, 'go')
+            plt.plot(i, te_e, 'ro')
+
+        try:
+            plt.show()
+        except:
+            print("ERROR: Sorry cannot show the graph on your system.")
+
+        plt.savefig("KNN_graph.png")
 main()
 
 
