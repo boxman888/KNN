@@ -40,11 +40,15 @@ class KNN:
         return np.sum(np.absolute(v1 - v2))
 
     # Get Neighbors(Xtrain) near y, up to as K.
-    def GetNeighbores(Xtrain, x, K):
+    def GetNeighbores(Xtrain, x, K, ignorSelf=False):
         dist = []
         friends = []
 
         for i in range(Xtrain.shape[0]):
+            if (ignorSelf and (Xtrain[i] == x).all()):
+                ignoreSelf = False
+                continue
+
             ABS = KNN.ABS_dist(Xtrain[i],x)
             #ed = KNN.Euclid_dist(Xtrain[i], x)
             dist.append((i, ABS))
@@ -64,8 +68,9 @@ class KNN:
         #quorum = max(labelVote, key=labelVote.count)
         return quorum
 
-    def CalculateKNN(self, K):
+    def CalculateKNN(self, K, ignoreSelf=False):
         tr_senate = []
+        valtr_senate = []
         te_senate = []
 
         for i in range(self.Xtrain.shape[0]):
@@ -73,12 +78,17 @@ class KNN:
             vote = KNN.LabelClass(neighbores, self.Ytrain)
             tr_senate.append(vote)
 
+        for i in range(self.Xtrain.shape[0]):
+            neighbores = KNN.GetNeighbores(self.Xtrain, self.Xtrain[i], K, True)
+            vote = KNN.LabelClass(neighbores, self.Ytrain)
+            valtr_senate.append(vote)
+
         for i in range(self.Xtest.shape[0]):
             neighbores = KNN.GetNeighbores(self.Xtest, self.Xtest[i], K)
             vote = KNN.LabelClass(neighbores, self.Ytest)
             te_senate.append(vote)
 
-        return tr_senate, te_senate
+        return tr_senate, valtr_senate, te_senate
 
     def CalculateError(self, Values, Y):
         delta = Values - Y
@@ -92,13 +102,15 @@ def main():
     Xtest, Ytest = FILES.GetTest()
 
     knn = KNN(Xtrain, Ytrain, Xtest, Ytest)
-    tr_rep, te_rep = knn.CalculateKNN(int(sys.argv[3]))
+    tr_rep, valtr_rep, te_rep = knn.CalculateKNN(int(sys.argv[3]))
 
     tr_e = knn.CalculateError(tr_rep, Ytrain)
+    valtr_e = knn.CalculateError(valtr_rep, Ytrain)
     te_e = knn.CalculateError(te_rep, Ytest)
 
-    print("Training Error: {0:.2f}".format(tr_e))
-    print("Testing Error: {0:.2f}".format(te_e))
+    print("Training Error: {0:.4f}".format(tr_e))
+    print("Validation Error: {0:.4f}".format(valtr_e))
+    print("Testing Error: {0:.4f}".format(te_e))
 
 main()
 
